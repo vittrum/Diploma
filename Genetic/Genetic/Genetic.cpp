@@ -6,12 +6,16 @@
 #include <chrono> 
 #include <tuple>
 #include <array>
+
 using namespace std;
 using namespace std::chrono; // Clock
 
+typedef tuple <int, int, int> Container; // 1 - высота, 2 - ширина, 3 - код контейнера
+typedef array <int, 5> Coordinate;       // 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
+typedef vector<vector<int>> Hold;		 //  
 
 // TO DO:
-// Дебажить заполнение координат
+// ПЕРЕПОЛНЕНИЕ СТЕКА, ВЕКТОР
 // Определить размещение контейнеров
 // Прикрутить библиотеку генетических алгоритмов
 
@@ -19,23 +23,26 @@ using namespace std::chrono; // Clock
 auto start = high_resolution_clock::now();	// Clock
 
 // Заполнить трюм пустыми значениями
-auto initialize_hold(vector<vector<int>> hold, int a_side, int b_side)->vector<vector<int>>;
+auto initialize_hold(Hold hold, int a_side, int b_side)->Hold;
 // Заполнить список контейнеров значениями
-auto fill_containers()->vector<tuple<int, int>>;
+auto fill_containers()->vector<Container>;
 // Создать список возможных координат для каждого контейнера
-auto create_container_coordinates(vector<tuple<int, int>> containers, vector<vector<int>> hold)->vector<array<int, 4>>;
+auto create_container_coordinates(vector<Container> containers, Hold hold)->vector<Coordinate>;
 // Разместить контейнеры
-auto settle_containers_in_hold();
+auto settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates)-> Hold;
 
 int main()
 {
 	auto start = high_resolution_clock::now();	// Clock
 
-	vector<vector<int>> hold;
+	Hold hold;
 	int a = 5; // Vertical
-	int b = 3; // Horizontal
+	int b = 4; // Horizontal
 	hold = initialize_hold(hold, a, b);
 	auto containers = fill_containers();
+	int small = 100;
+	int med = 100;
+	int big = 100;
 
 	// Распечатать трюм
 	/*
@@ -47,21 +54,31 @@ int main()
 	}*/
 
 	auto coordinates = create_container_coordinates(containers, hold);
+
 	// Распечатать координаты
-	for (int i = 0; i < coordinates.size(); i++)
+	/*for (int i = 0; i < coordinates.size(); i++)
 	{
 		cout << endl;
 		for (int j = 0; j < coordinates[0].size(); j++)
 			cout << coordinates[i][j] << ' ';
+	}*/
+	
+	hold = settle_containers_in_hold(hold, coordinates);
+
+	for (int i = 0; i < a; i++)
+	{
+		for (int j = 0; j < b; j++)
+			cout << hold[i][j] << ' ';
+		cout << endl;
 	}
 
-	auto stop = high_resolution_clock::now();					// Clock
+	auto stop     = high_resolution_clock::now();				// Clock
 	auto duration = duration_cast<microseconds>(stop - start);	// Clock
 
 	cout << endl << duration.count() << " ms" << endl;			// Clock
 }
 
-vector<vector<int>> initialize_hold(vector<vector<int>> hold, int a_side, int b_side)
+Hold initialize_hold(Hold hold, int a_side, int b_side)
 {
 	hold.clear();
 	vector<int> temp;
@@ -72,36 +89,62 @@ vector<vector<int>> initialize_hold(vector<vector<int>> hold, int a_side, int b_
 	return hold;
 }
 
-vector<tuple<int, int>> fill_containers()
+vector<Container> fill_containers()
 {
-	vector<tuple<int, int>> containers;
-	auto small = make_tuple(2, 2); 
-	auto med = make_tuple(2, 3);
-	auto big = make_tuple(2, 4);
+	vector<Container> containers;
+	auto small = make_tuple(2, 2, 1); 
+	auto med = make_tuple(2, 3, 2);
+	auto med2 = make_tuple(3, 2, 2);
+	auto big = make_tuple(2, 4, 3);
+	auto big2 = make_tuple(4, 2, 3);
 	containers.push_back(small);
-	containers.push_back(med);
+	containers.push_back(med);	
 	containers.push_back(big);
+	containers.push_back(med2);
+	containers.push_back(big2);
 	return containers;
 }
 
-vector<array<int, 4>> create_container_coordinates(vector<tuple<int, int>> containers, vector<vector<int>> hold)
+vector<Coordinate> create_container_coordinates(vector<Container> containers, Hold hold)
 {
-	vector<array<int, 4>> coordinates;
+	vector<Coordinate> coordinates;
 	int a = hold.size();
 	int b = hold[0].size();
-	array <int, 4> coord;
-	for (auto cont : containers) 
+	Coordinate coord;
+	int counter = 1;
+	// Перебираем все контейнеры
+	// get<1>(cont) - длина контейнера по вертикали, 0 - по горизонтали
+	// Для каждого контейнера сохраняем 4 значения: 2 для координаты левого верхнего
+	// и 2 - для нижнего правого углов
+	for (Container cont : containers) 
 	{
 		for (int i = 0; i < a - get<1>(cont) + 1; i++)
 			for (int j = 0; j < b - get<0>(cont) + 1; j++)
 			{
-				coord = { i, j, i + a, j + b };
+				coord = { i, j, i + get<1>(cont), j + get<0>(cont), get<2>(cont) }; 
 				coordinates.push_back(coord);
 			}
 	}
 	return coordinates;
 }
 
-
+// Переполнение стека. Почему - непонятно
+Hold settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates/*, int asml, int amed, int abig*/)
+{
+	int free_space = hold[0].size() * hold.size(); 
+	for (Coordinate c : coordinates)
+	{
+		int64_t v = (int64_t)c[2] - c[0]; // vertical
+		int64_t h = (int64_t)c[3] - c[1]; // horizontal
+		for (int i = 0; i < v; i++)
+		{
+			for (int j = 0; j < h; j++)
+			{
+				hold[v + i - 2][h + j - 2]++;
+			}
+		}
+	}
+	return hold;
+}
 
 
