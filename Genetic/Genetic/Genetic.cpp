@@ -55,6 +55,10 @@ int main()
 
 	auto coordinates = create_container_coordinates(containers, hold);
 
+	auto coord2 = coordinates;
+	coord2.clear();
+	coord2.push_back(coordinates[coordinates.size()-1]);
+	coord2.push_back(coordinates[0]);
 	// Распечатать координаты
 	/*for (int i = 0; i < coordinates.size(); i++)
 	{
@@ -63,7 +67,7 @@ int main()
 			cout << coordinates[i][j] << ' ';
 	}*/
 	
-	hold = settle_containers_in_hold(hold, coordinates);
+	hold = settle_containers_in_hold(hold, coord2);
 
 	for (int i = 0; i < a; i++)
 	{
@@ -121,21 +125,22 @@ vector<Coordinate> create_container_coordinates(vector<Container> containers, Ho
 		for (int i = 0; i < a - get<1>(cont) + 1; i++)
 			for (int j = 0; j < b - get<0>(cont) + 1; j++)
 			{
-				coord = { i, j, i + get<1>(cont), j + get<0>(cont), get<2>(cont) }; 
+				coord = { i, j, i + get<1>(cont) - 1, j + get<0>(cont) - 1, get<2>(cont) }; 
 				coordinates.push_back(coord);
 			}
 	}
 	return coordinates;
 }
 
-// Переполнение стека. Почему - непонятно
+// Переполнение стека. Почему - непонятно. Ломается на последнем элементе, т.е. на самом большом
 Hold settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates/*, int asml, int amed, int abig*/)
 {
-	int free_space = hold[0].size() * hold.size(); 
+	//int free_space = hold[0].size() * hold.size();
 	for (Coordinate c : coordinates)
 	{
-		int64_t v = (int64_t)c[2] - c[0]; // vertical
-		int64_t h = (int64_t)c[3] - c[1]; // horizontal
+		int v = c[2] - c[0] + 1; // vertical
+		int h = c[3] - c[1] + 1; // horizontal
+		cout << v << ' ' << h << endl;
 		for (int i = 0; i < v; i++)
 		{
 			for (int j = 0; j < h; j++)
