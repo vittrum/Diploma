@@ -31,6 +31,8 @@ auto start = high_resolution_clock::now();	// Clock
 auto initialize_hold(Hold hold, int a_side, int b_side)->Hold;
 // Заполнить список контейнеров значениями
 auto fill_container(Container c)->vector<Container>;
+// Сделать поворот контейнера
+auto rotate_container(vector<Container> c_s)->vector<Container>;
 // Создать список возможных координат для каждого контейнера
 auto create_container_coordinates(Container container, Hold hold)->vector<Coordinate>;
 // Разместить контейнеры
@@ -45,7 +47,7 @@ int main()
 	int a = 5; // Vertical
 	int b = 4; // Horizontal
 	hold = initialize_hold(hold, a, b);
-	auto containers = fill_containers();
+	//auto containers = fill_containers();
 	int small = 100;
 	int med = 100;
 	int big = 100;
@@ -118,6 +120,16 @@ vector<Coordinate> create_container_coordinates(Container container, Hold hold)
 		}
 }
 
+vector<Container> rotate_container(vector<Container> containers)
+{
+	Container r_container;
+	vector<Container> r_containers;
+	for (Container c : containers)
+	{
+		r_container = { get<1>(c), get<0>(c), get<2>(c) };
+		r_containers.push_back(r_container);
+	}	
+}
 //
 //vector<Container> fill_containers()
 //{
