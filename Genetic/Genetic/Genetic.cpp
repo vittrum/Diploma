@@ -7,17 +7,22 @@
 #include <tuple>
 #include <array>
 
+
+// TO DO:
+// Функция создания координат контейнера
+// Функция поворота контейнера
+// Функция перебора координат контейнера для размещения в трюме
+// 
+// 
+// POTOM: 
+// Прикрутить библиотеку генетических алгоритмов
+
 using namespace std;
 using namespace std::chrono; // Clock
 
-typedef tuple <int, int, int> Container; // 1 - высота, 2 - ширина, 3 - код контейнера
-typedef array <int, 5> Coordinate;       // 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
-typedef vector<vector<int>> Hold;		 //  
-
-// TO DO:
-// ПЕРЕПОЛНЕНИЕ СТЕКА, ВЕКТОР
-// Определить размещение контейнеров
-// Прикрутить библиотеку генетических алгоритмов
+using Container = tuple <int, int, int>; // 1 - высота, 2 - ширина, 3 - код контейнера
+using Coordinate = array <int, 5>;       // 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
+using Hold = vector<vector<int>>;		 //  
 
 
 auto start = high_resolution_clock::now();	// Clock
@@ -25,11 +30,12 @@ auto start = high_resolution_clock::now();	// Clock
 // Заполнить трюм пустыми значениями
 auto initialize_hold(Hold hold, int a_side, int b_side)->Hold;
 // Заполнить список контейнеров значениями
-auto fill_containers()->vector<Container>;
+auto fill_container(Container c)->vector<Container>;
 // Создать список возможных координат для каждого контейнера
-auto create_container_coordinates(vector<Container> containers, Hold hold)->vector<Coordinate>;
+auto create_container_coordinates(Container container, Hold hold)->vector<Coordinate>;
 // Разместить контейнеры
 auto settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates)-> Hold;
+
 
 int main()
 {
@@ -82,74 +88,94 @@ int main()
 	cout << endl << duration.count() << " ms" << endl;			// Clock
 }
 
-Hold initialize_hold(Hold hold, int a_side, int b_side)
+Hold initialize_hold(Hold hold, int vertical, int horizontal)
 {
 	hold.clear();
 	vector<int> temp;
-	for (int j = 0; j < b_side; j++)
+	for (int j = 0; j < horizontal; j++)
 		temp.push_back(0);
-	for (int i = 0; i < a_side; i++)
+	for (int i = 0; i < vertical; i++)
 		hold.push_back(temp);
 	return hold;
 }
 
-vector<Container> fill_containers()
+vector<Coordinate> create_container_coordinates(Container container, Hold hold)
 {
-	vector<Container> containers;
-	auto small = make_tuple(2, 2, 1); 
-	auto med = make_tuple(2, 3, 2);
-	auto med2 = make_tuple(3, 2, 2);
-	auto big = make_tuple(2, 4, 3);
-	auto big2 = make_tuple(4, 2, 3);
-	containers.push_back(small);
-	containers.push_back(med);	
-	containers.push_back(big);
-	containers.push_back(med2);
-	containers.push_back(big2);
-	return containers;
-}
+	int vertical   = static_cast<int>(hold.size());
+	int horizontal = static_cast<int>(hold[0].size());
+	int heigth     = get<0>(container);
+	int width	   = get<1>(container);
+	int type	   = get<2>(container);
 
-vector<Coordinate> create_container_coordinates(vector<Container> containers, Hold hold)
-{
+	Coordinate coordinate;
 	vector<Coordinate> coordinates;
-	int a = hold.size();
-	int b = hold[0].size();
-	Coordinate coord;
-	int counter = 1;
-	// Перебираем все контейнеры
-	// get<1>(cont) - длина контейнера по вертикали, 0 - по горизонтали
-	// Для каждого контейнера сохраняем 4 значения: 2 для координаты левого верхнего
-	// и 2 - для нижнего правого углов
-	for (Container cont : containers) 
-	{
-		for (int i = 0; i < a - get<1>(cont) + 1; i++)
-			for (int j = 0; j < b - get<0>(cont) + 1; j++)
-			{
-				coord = { i, j, i + get<1>(cont) - 1, j + get<0>(cont) - 1, get<2>(cont) }; 
-				coordinates.push_back(coord);
-			}
-	}
-	return coordinates;
-}
-
-// Переполнение стека. Почему - непонятно. Ломается на последнем элементе, т.е. на самом большом
-Hold settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates/*, int asml, int amed, int abig*/)
-{
-	//int free_space = hold[0].size() * hold.size();
-	for (Coordinate c : coordinates)
-	{
-		int v = c[2] - c[0] + 1; // vertical
-		int h = c[3] - c[1] + 1; // horizontal
-		cout << v << ' ' << h << endl;
-		for (int i = 0; i < v; i++)
+	
+	for (int i = 0; i < vertical - heigth; i++)
+		for (int j = 0; j < horizontal - width; j++)
 		{
-			for (int j = 0; j < h; j++)
-			{
-				hold[v + i - 2][h + j - 2]++;
-			}
+			coordinate = { i, j, i + heigth - 1, j + width, type };
+			coordinates.push_back(coordinate);
 		}
-	}
-	return hold;
 }
 
-
+//
+//vector<Container> fill_containers()
+//{
+//	vector<Container> containers;
+//	auto small = make_tuple(2, 2, 1); 
+//	auto med = make_tuple(2, 3, 2);
+//	auto med2 = make_tuple(3, 2, 2);
+//	auto big = make_tuple(2, 4, 3);
+//	auto big2 = make_tuple(4, 2, 3);
+//	containers.push_back(small);
+//	containers.push_back(med);	
+//	containers.push_back(big);
+//	containers.push_back(med2);
+//	containers.push_back(big2);
+//	return containers;
+//}
+//
+//vector<Coordinate> create_container_coordinates(vector<Container> containers, Hold hold)
+//{
+//	vector<Coordinate> coordinates;
+//	int a = hold.size();
+//	int b = hold[0].size();
+//	Coordinate coord;
+//	int counter = 1;
+//	// Перебираем все контейнеры
+//	// get<1>(cont) - длина контейнера по вертикали, 0 - по горизонтали
+//	// Для каждого контейнера сохраняем 4 значения: 2 для координаты левого верхнего
+//	// и 2 - для нижнего правого углов
+//	for (Container cont : containers) 
+//	{
+//		for (int i = 0; i < a - get<1>(cont) + 1; i++)
+//			for (int j = 0; j < b - get<0>(cont) + 1; j++)
+//			{
+//				coord = { i, j, i + get<1>(cont) - 1, j + get<0>(cont) - 1, get<2>(cont) }; 
+//				coordinates.push_back(coord);
+//			}
+//	}
+//	return coordinates;
+//}
+//
+//// Переполнение стека. Почему - непонятно. Ломается на последнем элементе, т.е. на самом большом
+//Hold settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates/*, int asml, int amed, int abig*/)
+//{
+//	//int free_space = hold[0].size() * hold.size();
+//	for (Coordinate c : coordinates)
+//	{
+//		int v = c[2] - c[0] + 1; // vertical
+//		int h = c[3] - c[1] + 1; // horizontal
+//		cout << v << ' ' << h << endl;
+//		for (int i = 0; i < v; i++)
+//		{
+//			for (int j = 0; j < h; j++)
+//			{
+//				hold[v + i - 2][h + j - 2]++;
+//			}
+//		}
+//	}
+//	return hold;
+//}
+//
+//
