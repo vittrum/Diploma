@@ -16,11 +16,22 @@
 // 
 // POTOM: 
 // Прикрутить библиотеку генетических алгоритмов
+// Создать структуру контейнеров, чтобы можно было создавать 
+// контейнеры вручную
 
 using namespace std;
 using namespace std::chrono; // Clock
 
+enum Container_Types
+{
+	SMALL,
+	MEDIUM,
+	BIG
+};
+
+
 using Container = tuple <int, int, int>; // 1 - высота, 2 - ширина, 3 - код контейнера
+using Containers = vector<Container>;
 using Coordinate = array <int, 5>;       // 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
 using Hold = vector<vector<int>>;		 //  
 
@@ -29,14 +40,21 @@ auto start = high_resolution_clock::now();	// Clock
 
 // Заполнить трюм пустыми значениями
 auto initialize_hold(Hold hold, int a_side, int b_side)->Hold;
+
 // Заполнить список контейнеров значениями
-auto fill_container(Container c)->vector<Container>;
+auto fill_container(Container c)->Containers;
+
 // Сделать поворот контейнера
-auto rotate_container(vector<Container> c_s)->vector<Container>;
+auto rotate_container(Containers c_s)->Containers;
+
+// Подготовить контейнеры
+auto prepare_containers (vector<Containers> types_list)-> 
+
 // Создать список возможных координат для каждого контейнера
 auto create_container_coordinates(Container container, Hold hold)->vector<Coordinate>;
+
 // Разместить контейнеры
-auto settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates)-> Hold;
+//auto settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates)-> Hold;
 
 
 int main()
@@ -61,7 +79,7 @@ int main()
 		cout << endl;
 	}*/
 
-	auto coordinates = create_container_coordinates(containers, hold);
+	auto coordinates = create_container_coordinates(container, hold);
 
 	auto coord2 = coordinates;
 	coord2.clear();
@@ -120,32 +138,30 @@ vector<Coordinate> create_container_coordinates(Container container, Hold hold)
 		}
 }
 
-vector<Container> rotate_container(vector<Container> containers)
+vector<Container> rotate_container(Containers containers)
 {
 	Container r_container;
-	vector<Container> r_containers;
+	Containers r_containers;
 	for (Container c : containers)
 	{
 		r_container = { get<1>(c), get<0>(c), get<2>(c) };
 		r_containers.push_back(r_container);
 	}	
+	return containers;
 }
-//
-//vector<Container> fill_containers()
-//{
-//	vector<Container> containers;
-//	auto small = make_tuple(2, 2, 1); 
-//	auto med = make_tuple(2, 3, 2);
-//	auto med2 = make_tuple(3, 2, 2);
-//	auto big = make_tuple(2, 4, 3);
-//	auto big2 = make_tuple(4, 2, 3);
-//	containers.push_back(small);
-//	containers.push_back(med);	
-//	containers.push_back(big);
-//	containers.push_back(med2);
-//	containers.push_back(big2);
-//	return containers;
-//}
+
+vector<Container> fill_containers()
+{
+	vector<Container> containers;
+	auto small = make_tuple(2, 2, 1); 
+	auto med = make_tuple(3, 2, 2);
+	auto big = make_tuple(3, 3, 3);
+	containers.push_back(small);
+	containers.push_back(med);	
+	containers.push_back(big);
+	return containers;
+}
+
 //
 //vector<Coordinate> create_container_coordinates(vector<Container> containers, Hold hold)
 //{
