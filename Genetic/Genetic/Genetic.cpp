@@ -19,39 +19,49 @@
 // Создать структуру контейнеров, чтобы можно было создавать 
 // контейнеры вручную
 
-using namespace std;
+//using namespace std;
 using namespace std::chrono; // Clock
 
-enum Container_Types
+enum Container_Type
 {
 	SMALL,
-	MEDIUM,
+	MED,
 	BIG
 };
 
+struct Container
+{
+	Container_Type _type;
+	int length;
+	int width;
+	int amount;
+};
 
-using Container = tuple <int, int, int>; // 1 - высота, 2 - ширина, 3 - код контейнера
-using Containers = vector<Container>;
-using Coordinate = array <int, 5>;       // 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
-using Hold = vector<vector<int>>;		 //  
+using Containers  = std::vector<Container>;
+using Coordinate  = std::array <int, 5>;           // 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
+using Coordinates = std::vector<Coordinate>;
+using Hold        = std::vector<std::vector<int>>;		//  
 
 
 auto start = high_resolution_clock::now();	// Clock
 
 // Заполнить трюм пустыми значениями
 auto initialize_hold(Hold hold, int a_side, int b_side)->Hold;
-
+// Создать контейнеры
+auto create_containers()->Containers;
 // Заполнить список контейнеров значениями
-auto fill_container(Container c)->Containers;
-
+//auto fill_containers(Container c)->Containers;
 // Сделать поворот контейнера
-auto rotate_container(Containers c_s)->Containers;
+auto rotate_containers(Containers c_s)->Containers;
+
+// Заполнить координаты
+//auto make_coordinates(Coordinates& original, Coordinates& duplicate)->void;
 
 // Подготовить контейнеры
-auto prepare_containers (vector<Containers> types_list)-> 
+//auto prepare_containers (vector<Containers> types_list)-> 
 
 // Создать список возможных координат для каждого контейнера
-auto create_container_coordinates(Container container, Hold hold)->vector<Coordinate>;
+//auto container_coordinates(Container container, Hold hold)->vector<Coordinate>;
 
 // Разместить контейнеры
 //auto settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates)-> Hold;
@@ -61,51 +71,26 @@ int main()
 {
 	auto start = high_resolution_clock::now();	// Clock
 
+	// Создание трюма
 	Hold hold;
 	int a = 5; // Vertical
 	int b = 4; // Horizontal
 	hold = initialize_hold(hold, a, b);
-	//auto containers = fill_containers();
-	int small = 100;
-	int med = 100;
-	int big = 100;
+	// Конец создания трюма
 
-	// Распечатать трюм
-	/*
-	for (int i = 0; i < a; i++)
-	{
-		for (int j = 0; j < b; j++)
-			cout << hold[i][j] << ' ';
-		cout << endl;
-	}*/
+	// Создание контейнера
+	Containers original_containers = create_containers();
+	Containers rotated_containers = rotate_containers(original_containers);
+	// Конец создания контейнера
 
-	auto coordinates = create_container_coordinates(container, hold);
-
-	auto coord2 = coordinates;
-	coord2.clear();
-	coord2.push_back(coordinates[coordinates.size()-1]);
-	coord2.push_back(coordinates[0]);
-	// Распечатать координаты
-	/*for (int i = 0; i < coordinates.size(); i++)
-	{
-		cout << endl;
-		for (int j = 0; j < coordinates[0].size(); j++)
-			cout << coordinates[i][j] << ' ';
-	}*/
+	// Создание координат контейнера
 	
-	hold = settle_containers_in_hold(hold, coord2);
+	// Конец создания координат контейнера
+	
+	auto stop     = high_resolution_clock::now();				       // Clock
+	auto duration = duration_cast<microseconds>(stop - start);	       // Clock
 
-	for (int i = 0; i < a; i++)
-	{
-		for (int j = 0; j < b; j++)
-			cout << hold[i][j] << ' ';
-		cout << endl;
-	}
-
-	auto stop     = high_resolution_clock::now();				// Clock
-	auto duration = duration_cast<microseconds>(stop - start);	// Clock
-
-	cout << endl << duration.count() << " ms" << endl;			// Clock
+	std::cout << std::endl << duration.count() << " ms" << std::endl;  // Clock
 }
 
 Hold initialize_hold(Hold hold, int vertical, int horizontal)
@@ -119,48 +104,50 @@ Hold initialize_hold(Hold hold, int vertical, int horizontal)
 	return hold;
 }
 
-vector<Coordinate> create_container_coordinates(Container container, Hold hold)
+Containers create_containers()
 {
-	int vertical   = static_cast<int>(hold.size());
-	int horizontal = static_cast<int>(hold[0].size());
-	int heigth     = get<0>(container);
-	int width	   = get<1>(container);
-	int type	   = get<2>(container);
-
-	Coordinate coordinate;
-	vector<Coordinate> coordinates;
-	
-	for (int i = 0; i < vertical - heigth; i++)
-		for (int j = 0; j < horizontal - width; j++)
-		{
-			coordinate = { i, j, i + heigth - 1, j + width, type };
-			coordinates.push_back(coordinate);
-		}
+	// В будущем здесь можно провести ввод контейнеров 
+	// с клавиатуры или с интерфейса
+	Containers containers;
+	Container c1 = { SMALL, 2, 2, 100 };
+	Container c2 = { MED, 3, 2, 100 };
+	Container c3 = { BIG, 4, 2, 100 };
+	containers.push_back(c1);
+	containers.push_back(c2);
+	containers.push_back(c3);
 }
 
-vector<Container> rotate_container(Containers containers)
+Containers rotate_containers(Containers containers)
 {
 	Container r_container;
 	Containers r_containers;
 	for (Container c : containers)
 	{
-		r_container = { get<1>(c), get<0>(c), get<2>(c) };
+		r_container = { c._type, c.width, c.length, c.amount };
 		r_containers.push_back(r_container);
 	}	
 	return containers;
 }
 
-vector<Container> fill_containers()
+Coordinates container_coordinates(Container container, Hold hold)
 {
-	vector<Container> containers;
-	auto small = make_tuple(2, 2, 1); 
-	auto med = make_tuple(3, 2, 2);
-	auto big = make_tuple(3, 3, 3);
-	containers.push_back(small);
-	containers.push_back(med);	
-	containers.push_back(big);
-	return containers;
+	int vertical = static_cast<int>(hold.size());
+	int horizontal = static_cast<int>(hold[0].size());
+
+	Coordinate coordinate;
+	Coordinates coordinates;
+
+	for (int i = 0; i < vertical - container.length; i++)
+		for (int j = 0; j < horizontal - container.width; j++)
+		{
+			coordinate = { i, j, i + container.length - 1, j + container.width, container._type };
+			coordinates.push_back(coordinate);
+		}
+	return coordinates;
 }
+
+
+
 
 //
 //vector<Coordinate> create_container_coordinates(vector<Container> containers, Hold hold)
