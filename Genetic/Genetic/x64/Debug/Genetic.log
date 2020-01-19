@@ -1,4 +1,3 @@
 ﻿  Genetic.cpp
-C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\Genetic\Genetic.cpp(115,21): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
-C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\Genetic\Genetic.cpp(116,24): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
-  Genetic.vcxproj -> C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\x64\Debug\Genetic.exe
+C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\Genetic\Genetic.cpp(89,22): error C3861: container_coordinates: идентификатор не найден
+C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\Genetic\Genetic.cpp(91,21): error C3861: container_coordinates: идентификатор не найден

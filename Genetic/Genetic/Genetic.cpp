@@ -9,10 +9,7 @@
 
 
 // TO DO:
-// Функция создания координат контейнера
-// Функция поворота контейнера
 // Функция перебора координат контейнера для размещения в трюме
-// 
 // 
 // POTOM: 
 // Прикрутить библиотеку генетических алгоритмов
@@ -42,9 +39,7 @@ using Coordinate  = std::array <int, 5>;           // 1 и 2 - (x1,y1), 3 и 4 -
 using Coordinates = std::vector<Coordinate>;
 using Hold        = std::vector<std::vector<int>>;		//  
 
-
 auto start = high_resolution_clock::now();	// Clock
-
 // Заполнить трюм пустыми значениями
 auto initialize_hold(Hold hold, int a_side, int b_side)->Hold;
 // Создать контейнеры
@@ -53,7 +48,8 @@ auto create_containers()->Containers;
 //auto fill_containers(Container c)->Containers;
 // Сделать поворот контейнера
 auto rotate_containers(Containers c_s)->Containers;
-
+// Координаты контейнера
+auto container_coordinates(Container c, Hold h)->Coordinates;
 // Заполнить координаты
 //auto make_coordinates(Coordinates& original, Coordinates& duplicate)->void;
 
@@ -84,7 +80,11 @@ int main()
 	// Конец создания контейнера
 
 	// Создание координат контейнера
-	
+	std::vector<Coordinates> original, rotated;
+	for (Container c : original_containers)
+		original.push_back(container_coordinates(c, hold));
+	for (Container c : rotated_containers)
+		rotated.push_back(container_coordinates(c, hold));
 	// Конец создания координат контейнера
 	
 	auto stop     = high_resolution_clock::now();				       // Clock
@@ -96,7 +96,7 @@ int main()
 Hold initialize_hold(Hold hold, int vertical, int horizontal)
 {
 	hold.clear();
-	vector<int> temp;
+	std::vector<int> temp;
 	for (int j = 0; j < horizontal; j++)
 		temp.push_back(0);
 	for (int i = 0; i < vertical; i++)
@@ -146,6 +146,38 @@ Coordinates container_coordinates(Container container, Hold hold)
 	return coordinates;
 }
 
+Hold settle_containers(Containers original, Containers rotated, Hold hold)
+{
+	int l = hold.size();
+	int w = hold[0].size();
+	for (int i = 0; i < l; i++)
+		for (int j = 0; j < w; i++)
+		{
+			if (hold[i][j] == 0)
+			{
+				for (int k = 0; k < rotated.size; k++)
+				{
+					Container co = original[k];
+					Container c = rotated[k];
+					if (c.length <= l - i && c.width <= w - j && c.amount > 0)
+					{
+						for (int m = 0; m < c.length; m++)
+							for (int n = 0; n < c.width; n++)
+								hold[i + m][j + n]++;
+						c.amount--;
+					}
+					else if (co.length <= l - i && co.width <= w - j && c.amount > 0)
+					{
+						for (int m = 0; m < co.length; m++)
+							for (int n = 0; n < co.width; n++)
+								hold[i + m][j + n]++;
+						c.amount--;
+					}
+				}	
+			}
+			
+		}
+}
 
 
 
