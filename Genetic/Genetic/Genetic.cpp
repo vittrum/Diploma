@@ -9,7 +9,7 @@
 
 
 // TO DO:
-// Функция перебора координат контейнера для размещения в трюме
+// Почему-то не заходит в повороты контейнеров
 // 
 // POTOM: 
 // Прикрутить библиотеку генетических алгоритмов
@@ -28,14 +28,15 @@ enum Container_Type
 
 struct Container
 {
-	Container_Type _type;
+	/*Container_Type*/
+	int _type;
 	int length;
 	int width;
 	int amount;
 };
 
 using Containers  = std::vector<Container>;
-using Coordinate  = std::array <int, 5>;           // 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
+using Coordinate  = std::array <int, 5>;				// 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
 using Coordinates = std::vector<Coordinate>;
 using Hold        = std::vector<std::vector<int>>;		//  
 
@@ -44,23 +45,12 @@ auto start = high_resolution_clock::now();	// Clock
 auto initialize_hold(Hold hold, int a_side, int b_side)->Hold;
 // Создать контейнеры
 auto create_containers()->Containers;
-// Заполнить список контейнеров значениями
-//auto fill_containers(Container c)->Containers;
 // Сделать поворот контейнера
 auto rotate_containers(Containers c_s)->Containers;
 // Координаты контейнера
 auto container_coordinates(Container c, Hold h)->Coordinates;
-// Заполнить координаты
-//auto make_coordinates(Coordinates& original, Coordinates& duplicate)->void;
-
-// Подготовить контейнеры
-//auto prepare_containers (vector<Containers> types_list)-> 
-
-// Создать список возможных координат для каждого контейнера
-//auto container_coordinates(Container container, Hold hold)->vector<Coordinate>;
-
 // Разместить контейнеры
-//auto settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates)-> Hold;
+auto settle_containers(Containers original, Containers rotated, Hold hold)->Hold;
 
 
 int main()
@@ -69,8 +59,8 @@ int main()
 
 	// Создание трюма
 	Hold hold;
-	int a = 5; // Vertical
-	int b = 4; // Horizontal
+	int a = 11; // Vertical
+	int b = 10; // Horizontal
 	hold = initialize_hold(hold, a, b);
 	// Конец создания трюма
 
@@ -86,7 +76,18 @@ int main()
 	for (Container c : rotated_containers)
 		rotated.push_back(container_coordinates(c, hold));
 	// Конец создания координат контейнера
+
+	// Симуляция размещения
+	hold = settle_containers(original_containers, rotated_containers, hold);
+	// Конец симуляции размещения
 	
+	for (auto i : hold)
+	{
+		std::cout << '\n';
+		for (auto j : i)
+			std::cout << j << ' ';
+	}
+
 	auto stop     = high_resolution_clock::now();				       // Clock
 	auto duration = duration_cast<microseconds>(stop - start);	       // Clock
 
@@ -109,12 +110,15 @@ Containers create_containers()
 	// В будущем здесь можно провести ввод контейнеров 
 	// с клавиатуры или с интерфейса
 	Containers containers;
-	Container c1 = { SMALL, 2, 2, 100 };
-	Container c2 = { MED, 3, 2, 100 };
-	Container c3 = { BIG, 4, 2, 100 };
-	containers.push_back(c1);
-	containers.push_back(c2);
+	Container c1 = { 1, 2, 2, 5 };
+	Container c2 = { 2, 3, 2, 4 };
+	Container c3 = { 3, 4, 3, 3 };
+	Container c4 = { 4, 5, 4, 2 };
+	containers.push_back(c4);
 	containers.push_back(c3);
+	containers.push_back(c2);
+	containers.push_back(c1);
+	return containers;
 }
 
 Containers rotate_containers(Containers containers)
@@ -148,81 +152,40 @@ Coordinates container_coordinates(Container container, Hold hold)
 
 Hold settle_containers(Containers original, Containers rotated, Hold hold)
 {
-	int l = hold.size();
-	int w = hold[0].size();
-	for (int i = 0; i < l; i++)
-		for (int j = 0; j < w; i++)
-		{
-			if (hold[i][j] == 0)
+	int hold_length = hold.size();
+	int hold_width = hold[0].size();
+	
+	for (int i = 0; i < hold_length; i++)
+		for (int j = 0; j < hold_width; j++)
+			for (int k = 0; k < rotated.size(); k++)
 			{
-				for (int k = 0; k < rotated.size; k++)
+				if 
+				(
+					hold[i][j] == 0                         && // Если ячейка контейнера, с которой начинают движение, свободна
+					rotated[k].amount > 0					&& // Если контейнеры данного типа еще остались
+					i + rotated[k].length - 1 < hold_length && // Если помещается по длине
+					j + rotated[k].width - 1 < hold_width 	   // По ширине					
+				)
 				{
-					Container co = original[k];
-					Container c = rotated[k];
-					if (c.length <= l - i && c.width <= w - j && c.amount > 0)
-					{
-						for (int m = 0; m < c.length; m++)
-							for (int n = 0; n < c.width; n++)
-								hold[i + m][j + n]++;
-						c.amount--;
-					}
-					else if (co.length <= l - i && co.width <= w - j && c.amount > 0)
-					{
-						for (int m = 0; m < co.length; m++)
-							for (int n = 0; n < co.width; n++)
-								hold[i + m][j + n]++;
-						c.amount--;
-					}
-				}	
-			}
-			
-		}
+					for (int m = 0; m < rotated[k].length; m++)
+						for (int n = 0; n < rotated[k].width; n++)
+							hold[i + m][j + n] = rotated[k]._type;
+					rotated[k].amount--;
+				}
+				else 
+				if 
+				(
+					hold[i][j] == 0							 &&
+					rotated[k].amount > 0					 &&
+					i + original[k].length - 1 < hold_length && 
+					j + original[k].width - 1 < hold_width	  					
+				)
+				{
+					for (int m = 0; m < original[k].length; m++)
+						for (int n = 0; n < original[k].width; n++)
+							hold[i + m][j + n] = rotated[k]._type + 10;
+					rotated[k].amount--;
+				}
+			}	
+	return hold;
 }
-
-
-
-//
-//vector<Coordinate> create_container_coordinates(vector<Container> containers, Hold hold)
-//{
-//	vector<Coordinate> coordinates;
-//	int a = hold.size();
-//	int b = hold[0].size();
-//	Coordinate coord;
-//	int counter = 1;
-//	// Перебираем все контейнеры
-//	// get<1>(cont) - длина контейнера по вертикали, 0 - по горизонтали
-//	// Для каждого контейнера сохраняем 4 значения: 2 для координаты левого верхнего
-//	// и 2 - для нижнего правого углов
-//	for (Container cont : containers) 
-//	{
-//		for (int i = 0; i < a - get<1>(cont) + 1; i++)
-//			for (int j = 0; j < b - get<0>(cont) + 1; j++)
-//			{
-//				coord = { i, j, i + get<1>(cont) - 1, j + get<0>(cont) - 1, get<2>(cont) }; 
-//				coordinates.push_back(coord);
-//			}
-//	}
-//	return coordinates;
-//}
-//
-//// Переполнение стека. Почему - непонятно. Ломается на последнем элементе, т.е. на самом большом
-//Hold settle_containers_in_hold(Hold hold, vector<Coordinate> coordinates/*, int asml, int amed, int abig*/)
-//{
-//	//int free_space = hold[0].size() * hold.size();
-//	for (Coordinate c : coordinates)
-//	{
-//		int v = c[2] - c[0] + 1; // vertical
-//		int h = c[3] - c[1] + 1; // horizontal
-//		cout << v << ' ' << h << endl;
-//		for (int i = 0; i < v; i++)
-//		{
-//			for (int j = 0; j < h; j++)
-//			{
-//				hold[v + i - 2][h + j - 2]++;
-//			}
-//		}
-//	}
-//	return hold;
-//}
-//
-//
