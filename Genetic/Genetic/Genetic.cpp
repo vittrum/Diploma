@@ -110,14 +110,15 @@ Containers create_containers()
 	// В будущем здесь можно провести ввод контейнеров 
 	// с клавиатуры или с интерфейса
 	Containers containers;
-	Container c1 = { 1, 2, 2, 5 };
-	Container c2 = { 2, 3, 2, 4 };
-	Container c3 = { 3, 4, 3, 3 };
-	Container c4 = { 4, 5, 4, 2 };
+	Container c1 = { 1, 2, 2, 5000 };
+	Container c2 = { 2, 3, 2, 4000 };
+	Container c3 = { 3, 4, 3, 3000 };
+	Container c4 = { 4, 5, 4, 2000 };
+	containers.push_back(c1);
 	containers.push_back(c4);
 	containers.push_back(c3);
 	containers.push_back(c2);
-	containers.push_back(c1);
+	
 	return containers;
 }
 
@@ -167,10 +168,21 @@ Hold settle_containers(Containers original, Containers rotated, Hold hold)
 					j + rotated[k].width - 1 < hold_width 	   // По ширине					
 				)
 				{
+					bool free = true;
 					for (int m = 0; m < rotated[k].length; m++)
 						for (int n = 0; n < rotated[k].width; n++)
-							hold[i + m][j + n] = rotated[k]._type;
-					rotated[k].amount--;
+							if (hold[i + m][j + n] > 0)
+							{
+								free = false;
+								break;
+							}
+					if (free)
+					{
+						for (int m = 0; m < rotated[k].length; m++)
+							for (int n = 0; n < rotated[k].width; n++)
+								hold[i + m][j + n] = rotated[k]._type;
+						rotated[k].amount--;
+					}
 				}
 				else 
 				if 
@@ -181,11 +193,94 @@ Hold settle_containers(Containers original, Containers rotated, Hold hold)
 					j + original[k].width - 1 < hold_width	  					
 				)
 				{
+					bool free = true;
 					for (int m = 0; m < original[k].length; m++)
 						for (int n = 0; n < original[k].width; n++)
-							hold[i + m][j + n] = rotated[k]._type + 10;
-					rotated[k].amount--;
+							if (hold[i + m][j + n] > 0)
+							{
+								free = false;
+								break;
+							}
+					if (free)
+					{
+						for (int m = 0; m < original[k].length; m++)
+							for (int n = 0; n < original[k].width; n++)
+								hold[i + m][j + n] = rotated[k]._type + 10;
+						rotated[k].amount--;
+					}
 				}
 			}	
 	return hold;
+}
+
+Hold brute_force(Containers original, Containers rotated, Hold hold)
+{
+	int hold_length = hold.size();
+	int hold_width = hold[0].size();
+
+	for (int i = 0; i < hold_length; i++)
+		for (int j = 0; j < hold_width; j++)
+			for (int k = 0; k < rotated.size(); k++)
+			{
+				if
+					(
+						hold[i][j] == 0 && // Если ячейка контейнера, с которой начинают движение, свободна
+						rotated[k].amount > 0 && // Если контейнеры данного типа еще остались
+						i + rotated[k].length - 1 < hold_length && // Если помещается по длине
+						j + rotated[k].width - 1 < hold_width 	   // По ширине					
+						)
+				{
+					bool free = true;
+					for (int m = 0; m < rotated[k].length; m++)
+						for (int n = 0; n < rotated[k].width; n++)
+							if (hold[i + m][j + n] > 0)
+							{
+								free = false;
+								break;
+							}
+					if (free)
+					{
+						for (int m = 0; m < rotated[k].length; m++)
+							for (int n = 0; n < rotated[k].width; n++)
+								hold[i + m][j + n] = rotated[k]._type;
+						rotated[k].amount--;
+					}
+				}
+				else
+					if
+						(
+							hold[i][j] == 0 &&
+							rotated[k].amount > 0 &&
+							i + original[k].length - 1 < hold_length &&
+							j + original[k].width - 1 < hold_width
+							)
+					{
+						bool free = true;
+						for (int m = 0; m < original[k].length; m++)
+							for (int n = 0; n < original[k].width; n++)
+								if (hold[i + m][j + n] > 0)
+								{
+									free = false;
+									break;
+								}
+						if (free)
+						{
+							for (int m = 0; m < original[k].length; m++)
+								for (int n = 0; n < original[k].width; n++)
+									hold[i + m][j + n] = rotated[k]._type + 10;
+							rotated[k].amount--;
+						}
+					}
+			}
+	return hold;
+}
+
+int calculate_space(Hold hold)
+{
+	int res = 0;
+	for (int i = 0; i < hold.size(); i++)
+		for (int j = 0; j < hold[0].size(); j++)
+			if (i == 0)
+				res++;
+	return res;
 }
