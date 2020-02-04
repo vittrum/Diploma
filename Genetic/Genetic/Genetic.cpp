@@ -13,8 +13,7 @@
 // 
 // POTOM: 
 // Прикрутить библиотеку генетических алгоритмов
-// Создать структуру контейнеров, чтобы можно было создавать 
-// контейнеры вручную
+//
 
 //using namespace std;
 using namespace std::chrono; // Clock
@@ -50,7 +49,7 @@ auto rotate_containers(Containers c_s)->Containers;
 // Координаты контейнера
 auto container_coordinates(Container c, Hold h)->Coordinates;
 // Разместить контейнеры
-auto settle_containers(Containers original, Containers rotated, Hold hold)->Hold;
+auto settle_containers(Containers original, Containers rotated, Hold &hold)->Coordinates;
 
 
 int main()
@@ -78,7 +77,7 @@ int main()
 	// Конец создания координат контейнера
 
 	// Симуляция размещения
-	hold = settle_containers(original_containers, rotated_containers, hold);
+	auto coord = settle_containers(original_containers, rotated_containers, hold);
 	// Конец симуляции размещения
 	
 	for (auto i : hold)
@@ -151,10 +150,12 @@ Coordinates container_coordinates(Container container, Hold hold)
 	return coordinates;
 }
 
-Hold settle_containers(Containers original, Containers rotated, Hold hold)
+Coordinates settle_containers(Containers original, Containers rotated, Hold &hold)
 {
 	int hold_length = hold.size();
 	int hold_width = hold[0].size();
+	Coordinates coordinates;
+	Coordinate coord;
 	
 	for (int i = 0; i < hold_length; i++)
 		for (int j = 0; j < hold_width; j++)
@@ -178,6 +179,8 @@ Hold settle_containers(Containers original, Containers rotated, Hold hold)
 							}
 					if (free)
 					{
+						coord = { i, j, i + rotated[k].length - 1, j + rotated[k].width - 1 };
+						coordinates.push_back(coord);
 						for (int m = 0; m < rotated[k].length; m++)
 							for (int n = 0; n < rotated[k].width; n++)
 								hold[i + m][j + n] = rotated[k]._type;
@@ -203,6 +206,8 @@ Hold settle_containers(Containers original, Containers rotated, Hold hold)
 							}
 					if (free)
 					{
+						coord = { i, j, i + original[k].length, j + original[k].width };
+						coordinates.push_back(coord);
 						for (int m = 0; m < original[k].length; m++)
 							for (int n = 0; n < original[k].width; n++)
 								hold[i + m][j + n] = rotated[k]._type + 10;
@@ -210,69 +215,42 @@ Hold settle_containers(Containers original, Containers rotated, Hold hold)
 					}
 				}
 			}	
-	return hold;
+	return coordinates;
 }
 
-Hold brute_force(Containers original, Containers rotated, Hold hold)
+Hold brute_force(Containers original, Containers rotated, Hold &hold)
 {
-	int hold_length = hold.size();
-	int hold_width = hold[0].size();
+	// Это та структура, в которую будут записываться все результаты
+	// Т.е. в конце итерации, когда весь контейнер заполнен, в нее будут
+	// занесены все координаты контейнеров, отпечаток трюма и его свободное место
+	std::vector<std::tuple<Coordinates, Hold, int>> poops;
+	std::tuple<Coordinates, Hold, int> poop; 
+	// Это список контейнеров, которые в данный момент перебираются итератором. 
+	// Как только какое-то из значений в depth равняется с LIMIT, это значит, что  
+	// все контейнеры уже пробовались и стоит подниматься на уровень выше
+	std::vector<int> depth;
+	// Это предел, при котором будет ясно, когда перебрали все контейнеры на шаге
+	int LIMIT = original.size(); 
 
-	for (int i = 0; i < hold_length; i++)
-		for (int j = 0; j < hold_width; j++)
-			for (int k = 0; k < rotated.size(); k++)
-			{
-				if
-					(
-						hold[i][j] == 0 && // Если ячейка контейнера, с которой начинают движение, свободна
-						rotated[k].amount > 0 && // Если контейнеры данного типа еще остались
-						i + rotated[k].length - 1 < hold_length && // Если помещается по длине
-						j + rotated[k].width - 1 < hold_width 	   // По ширине					
-						)
-				{
-					bool free = true;
-					for (int m = 0; m < rotated[k].length; m++)
-						for (int n = 0; n < rotated[k].width; n++)
-							if (hold[i + m][j + n] > 0)
-							{
-								free = false;
-								break;
-							}
-					if (free)
-					{
-						for (int m = 0; m < rotated[k].length; m++)
-							for (int n = 0; n < rotated[k].width; n++)
-								hold[i + m][j + n] = rotated[k]._type;
-						rotated[k].amount--;
-					}
-				}
-				else
-					if
-						(
-							hold[i][j] == 0 &&
-							rotated[k].amount > 0 &&
-							i + original[k].length - 1 < hold_length &&
-							j + original[k].width - 1 < hold_width
-							)
-					{
-						bool free = true;
-						for (int m = 0; m < original[k].length; m++)
-							for (int n = 0; n < original[k].width; n++)
-								if (hold[i + m][j + n] > 0)
-								{
-									free = false;
-									break;
-								}
-						if (free)
-						{
-							for (int m = 0; m < original[k].length; m++)
-								for (int n = 0; n < original[k].width; n++)
-									hold[i + m][j + n] = rotated[k]._type + 10;
-							rotated[k].amount--;
-						}
-					}
-			}
+	// Делаем простое размещение контейнеров, чтобы понять, на каких координатах какой контейнер размещен
+	// После этого координаты будем рассматривать снизу вверх, т.к. последняя координата - последний контейнер
+	Coordinates coords = settle_containers(original, rotated, hold);
+	Coordinate last_block = coords[coords.size() - 1];
+}
+Hold loop(Coordinate last, Hold hold, Containers conts, Coordinates &coords)
+{
+	// Удаление контейнера
+	delete_container(hold, last);
+	// Попытка разместить контейнеры
+	for (int i = 0; i < conts.size(); i++)
+	{
+		if (place_container(hold, conts[i], coords))
+		{
+
+		}
+	}
 	return hold;
+
 }
 
 int calculate_space(Hold hold)
@@ -283,4 +261,46 @@ int calculate_space(Hold hold)
 			if (i == 0)
 				res++;
 	return res;
+}
+
+void delete_container(Hold &h, Coordinate c) 
+{
+	for (int m = 0; m < c[2]; m++)
+		for (int n = 0; n < c[3]; n++)
+			h[c[0] + m][c[1] + n] = 0;
+}
+
+bool place_container(Hold& hold, Container c, Coordinates &cs)
+{
+	Coordinate coord;
+	for (int i = 0; i < hold.size(); i++)
+		for (int j = 0; j < hold[0].size(); j++)
+		{
+			if
+				(
+					hold[i][j] == 0						&& 					
+					i + c.length - 1 < hold.size()		&& 
+					j + c.width - 1 < hold[0].size() 	  				
+				)
+			{
+				bool free = true;
+				for (int m = 0; m < c.length; m++)
+					for (int n = 0; n < c.width; n++)
+						if (hold[i + m][j + n] > 0)
+						{
+							free = false;
+							return false;
+						}				
+				if (free)
+				{
+					coord = { i, j, i + c.length - 1, j + c.width - 1 };
+					cs.push_back(coord);
+					for (int m = 0; m < c.length; m++)
+						for (int n = 0; n < c.width; n++)
+							hold[i + m][j + n] = c._type;
+					return true;
+				}				
+			}
+		}
+	return false;
 }

@@ -1,4 +1,4 @@
 ﻿  Genetic.cpp
-C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\Genetic\Genetic.cpp(156,31): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
-C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\Genetic\Genetic.cpp(157,33): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\Genetic\Genetic.cpp(155,31): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
+C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\Genetic\Genetic.cpp(156,33): warning C4267: инициализация: преобразование из "size_t" в "int"; возможна потеря данных
   Genetic.vcxproj -> C:\Users\vittrum\Desktop\Diploma\Diploma\Genetic\x64\Debug\Genetic.exe
