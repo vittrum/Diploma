@@ -37,7 +37,11 @@ struct Container
 using Containers  = std::vector<Container>;
 using Coordinate  = std::array <int, 5>;				// 1 и 2 - (x1,y1), 3 и 4 - (x2,y2), 5 - номер контейнера
 using Coordinates = std::vector<Coordinate>;
-using Hold        = std::vector<std::vector<int>>;		//  
+using Hold        = std::vector<std::vector<int>>;		
+
+// Это число служит для того, чтобы знать, расположены контейнеры заранее, или 
+// их уже перебирал bruteforce
+static const int BASE = 9;
 
 auto start = high_resolution_clock::now();	// Clock
 // Заполнить трюм пустыми значениями
@@ -50,6 +54,16 @@ auto rotate_containers(Containers c_s)->Containers;
 auto container_coordinates(Container c, Hold h)->Coordinates;
 // Разместить контейнеры
 auto settle_containers(Containers original, Containers rotated, Hold &hold)->Coordinates;
+// Подсчет пустого места в трюме
+auto calculate_space(Hold hold)->int;
+// Удаление контейнера, возвращает тип контейнера
+auto delete_container(Hold& h, Coordinate c)->int;
+// Размещение контейнера, true если удалось разместить, иначе false
+auto place_container(Hold& hold, Container c, Coordinates& cs)->bool;
+// Брутфорс, возвращает список отпечатанных значений
+auto brute_force(Containers original, Containers rotated, Hold& hold)->std::vector<std::tuple<Coordinates, Hold, int>>;
+// Сортировка брутфорса
+auto get_best_case(std::vector<std::tuple<Coordinates, Hold, int>> archive)->std::tuple<Coordinates, Hold, int>;
 
 
 int main()
@@ -79,7 +93,12 @@ int main()
 	// Симуляция размещения
 	auto coord = settle_containers(original_containers, rotated_containers, hold);
 	// Конец симуляции размещения
-	
+
+	// Начало брутфорса
+	auto archive = brute_force(original_containers, rotated_containers, hold);
+	// Конец брутфорса
+	hold = std::get<1>(get_best_case(archive));
+
 	for (auto i : hold)
 	{
 		std::cout << '\n';
@@ -218,39 +237,80 @@ Coordinates settle_containers(Containers original, Containers rotated, Hold &hol
 	return coordinates;
 }
 
-Hold brute_force(Containers original, Containers rotated, Hold &hold)
+std::vector<std::tuple<Coordinates, Hold, int>> brute_force(Containers original, Containers rotated, Hold &hold)
 {
 	// Это та структура, в которую будут записываться все результаты
 	// Т.е. в конце итерации, когда весь контейнер заполнен, в нее будут
 	// занесены все координаты контейнеров, отпечаток трюма и его свободное место
-	std::vector<std::tuple<Coordinates, Hold, int>> poops;
-	std::tuple<Coordinates, Hold, int> poop; 
-	// Это список контейнеров, которые в данный момент перебираются итератором. 
-	// Как только какое-то из значений в depth равняется с LIMIT, это значит, что  
-	// все контейнеры уже пробовались и стоит подниматься на уровень выше
-	std::vector<int> depth;
+	std::vector<std::tuple<Coordinates, Hold, int>> archive;
+	std::tuple<Coordinates, Hold, int> record; 
 	// Это предел, при котором будет ясно, когда перебрали все контейнеры на шаге
 	int LIMIT = original.size(); 
 
+	int previous;
+	bool done_bruteforcing = false;
+	
 	// Делаем простое размещение контейнеров, чтобы понять, на каких координатах какой контейнер размещен
 	// После этого координаты будем рассматривать снизу вверх, т.к. последняя координата - последний контейнер
 	Coordinates coords = settle_containers(original, rotated, hold);
-	Coordinate last_block = coords[coords.size() - 1];
-}
-Hold loop(Coordinate last, Hold hold, Containers conts, Coordinates &coords)
-{
-	// Удаление контейнера
-	delete_container(hold, last);
-	// Попытка разместить контейнеры
-	for (int i = 0; i < conts.size(); i++)
-	{
-		if (place_container(hold, conts[i], coords))
-		{
 
+	Coordinate  last_block = coords[coords.size() - 1];	
+	auto it = coords.end();
+	coords.erase(it);
+	previous = delete_container(hold, last_block);
+	// Если удалённый контейнер не трогали, мы удаляем его и начинаем подставлять туда контейнеры из 
+	// списка с самого начала, до тех пор, пока какой-то не встанет на место или не окажется, что его 
+	// больше некуда ставить. Тогда делается отпечаток результатов и начинается копание дальше
+	while (!done_bruteforcing)
+	{
+		if (previous > BASE)
+		{
+			for (auto c : original) // Перебор всех контейнеров
+			{
+				if (place_container(hold, c, coords)) // Если контейнер удалось поместить, то прерываем перебор
+				{
+					break;
+				}
+				else
+				{
+					// Если ни один из контейнеров не поместился, значит, трюм полон и нужно 
+					// сохранить результат
+					archive.push_back(record = { coords, hold, calculate_space(hold) });
+				}
+			}
+		}
+		else if (previous == LIMIT)
+		{
+			last_block = coords[coords.size() - 1];
+			auto it = coords.end();
+			coords.erase(it);
+			if (!coords.empty())
+			{
+				previous = delete_container(hold, last_block);
+			}
+			else
+			{
+				done_bruteforcing = true;
+			}
+		}
+		else if (previous < LIMIT)
+		{
+			for (int i = previous+1; i < LIMIT; i++) // Перебор начинаем с того контейнера, который был до этого
+			{
+				if (place_container(hold, original[i], coords))
+				{
+					break;
+				}
+				else
+				{
+					// Если ни один из контейнеров не поместился, значит, трюм полон и нужно 
+					// сохранить результат
+					archive.push_back(record = { coords, hold, calculate_space(hold) });
+				}
+			}
 		}
 	}
-	return hold;
-
+	return archive;
 }
 
 int calculate_space(Hold hold)
@@ -263,11 +323,12 @@ int calculate_space(Hold hold)
 	return res;
 }
 
-void delete_container(Hold &h, Coordinate c) 
+int delete_container(Hold &h, Coordinate c) 
 {
 	for (int m = 0; m < c[2]; m++)
 		for (int n = 0; n < c[3]; n++)
 			h[c[0] + m][c[1] + n] = 0;
+	return c[4];
 }
 
 bool place_container(Hold& hold, Container c, Coordinates &cs)
@@ -304,3 +365,15 @@ bool place_container(Hold& hold, Container c, Coordinates &cs)
 		}
 	return false;
 }
+
+std::tuple<Coordinates, Hold, int> get_best_case(std::vector<std::tuple<Coordinates, Hold, int>> archive)
+{
+	auto best_solution = archive[0];
+	for (auto i : archive)
+	{
+		if (std::get<2>(i) < std::get<2>(best_solution))
+			best_solution = i;
+	}
+	return best_solution;
+}
+
